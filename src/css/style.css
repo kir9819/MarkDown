@@ -1,0 +1,56 @@
+.item {
+  width: 100%;
+}
+.inputName {
+  display: inline-block;
+}
+.inline {
+  margin-top: 0;
+}
+.margin-top {
+  margin-bottom: 10px;
+}
+textarea {
+  padding-top: 15px !important;
+  min-height: 500px !important;
+  max-height: 500px;
+  resize: none;
+  outline: none;
+  border: none;
+}
+#result {
+  min-height: 500px;
+  max-height: 500px;
+  overflow: auto;
+  border-radius: 0 5px 5px 0;
+}
+.row {
+  margin-bottom: 0 !important;
+}
+.fileName {
+  margin-top: 10px;
+  display: inline;
+}
+#menuLeft {
+  padding: 0;
+  position: absolute;
+  background-color: #283593;
+  color: #e8eaf6;
+  height: 100%;
+  top:0;
+  z-index: 1;
+  overflow-y: auto;
+  box-shadow: 0 0 1em black;
+  box-shadow-left: inset 0 0 1em 1em black;
+}
+.btn-flat:hover {
+  border-radius: 0 ;
+  background-color: #00b8d4 !important;
+  color: #84ffff;
+}
+
+.md {
+  border: 1px solid black;
+  border-radius: 5px 0 0 5px;
+  background-color: white;
+}

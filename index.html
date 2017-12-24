@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Markdown</title>
+    <meta charset="utf-8" />
+    <link href="src/css/style.css" type="text/css" rel="stylesheet" media="screen,projection" /> 
+    <link href="src/css/materialize.min.css" type="text/css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body class="">
+    <div id="editor">
+        <div class="row center-align">
+
+                                        <!--||||||||||||-->
+                                        <!--||||MENU||||-->
+                                        <!--||||||||||||-->
+                                        
+            <a class="btn indigo darken-3 margin-top" v-on:click="getFiles()">Все файлы</a>
+             <a class="btn indigo darken-3 margin-top" v-bind:class="{ disabled: isDel }" v-on:click="deleteFile()">Удалить</a>
+            <a class="btn indigo darken-3 margin-top" v-bind:class="{ disabled: isOld }" v-on:click="save()">Сохранить</a>
+           
+        </div>
+        <div class="row">
+            <div class="col s12 m4 offset-m4 input-field center-align" v-bind:class="{ hide: !isEnterName }">
+                <input placeholder="" class="center-align" type="text" id="newName" v-model="newFileName"/>
+                <label class="active center-align" for="newName">Имя файла</label>
+            </div>
+
+                                        <!--||||||||||||-->
+                                        <!--|||FILES||||-->
+                                        <!--||||||||||||-->
+
+            <div id="menuLeft" class="col s6 m3" v-bind:class="{ hide: isHide }">
+                <div class="center-align">
+                    <p>Доступные файлы:</p>
+                </div>
+                <div class="center-align" v-if="files.length == 0">
+                    <p>Файлов нет</p>
+                </div>
+                <ul class="" width="100%" id="items"> 
+                    <li v-for="file in files">
+                        <a class="waves-effect btn btn-flat cyan-text text-accent-1 truncate item" v-on:click="open(file)">{{file.fileName}}</a>
+                    </li>
+                </ul>
+                <div class="center-align">
+                    <a class="btn indigo accent-1" v-on:click="create()">Создать новый</a>
+                </div>
+            </div>
+
+                                        <!--||||||||||||-->
+                                        <!--||MARKDOWN||-->
+                                        <!--||||||||||||-->
+            
+            <div class="col s12" v-on:click="isHide = true"><!--v-bind:class="[ isMenu ? 's12 m9' : 's12 m12' ]">-->
+                <div class="input-field">
+                    <textarea class="col s12 m6 md" :value="input" @input="update" id="textarea1" v-on:click="isHide = true"></textarea>
+                </div>
+                <div id="result" class="col s12 m6 md" v-html="compiledMarkdown"></div>
+            </div>
+        </div>
+    </div>
+
+  <script src="https://unpkg.com/marked@0.3.6"></script>
+  <script src="https://unpkg.com/lodash@4.16.0"></script>
+  <script src="https://unpkg.com/vue"></script>
+  <script src="https://unpkg.com/vue-resource/dist/vue-resource.js"></script>
+
+  <script>
+        var id;
+        new Vue({
+            el: '#editor',
+            data: {
+                input: '',
+                newFileName: "markdown",
+                currentFile: null,
+                newFile: null,
+                newFileData: '',
+                files: [
+                ],
+                isElements: false,
+                isDel: true,
+                isReady: true,
+                isOld: true,
+                isHide: true,
+                isEnterName: true,
+                isMenu: false,
+                isExist: false,
+                isChoosed: false
+            },
+            computed: {
+                compiledMarkdown: function () {
+                    return marked(this.input, { sanitize: true })
+                }
+            },
+            methods: {
+                update: _.debounce(function (e) {
+                    this.input = e.target.value;
+                    this.isOld = false;
+                    if (this.isExist) {this.isDel = false;}
+                }, 300),
+                create: function () {
+                    // // console.log ("create");
+                    this.input = '';
+                    this.currentFile = null;
+                    this.newFileName = "markdown";
+                    this.isDel = false;
+                    this.isExist = false;
+                    this.isOld = true;
+                    this.isHide = true;
+                    this.save();
+                    document.getElementById("textarea1").focus();
+                },
+                open: function (file) {
+                    var currentFile = this.files.filter(function (elem) {
+                        if (elem.id === file.id) {
+                            return elem;
+                        }
+                    })[0];
+                    this.input = currentFile.fileData;
+                    this.currentFile = currentFile;
+                    this.newFileName = this.currentFile.fileName
+                    this.isExist = true;
+                    this.isDel = false;
+                    this.isOld = true;
+                    this.getFiles();
+                },
+                save: function () {
+                    if (this.currentFile === null) {
+                        if (this.newFileName === "") {this.newFileName = "markdown";}
+                        this.newFileData = this.input + ' ';
+                        this.newFile = { fileName: this.newFileName, fileData: this.newFileData }
+                        this.postFiles();
+                    }
+                    else {
+                        if (this.currentFile.fileName !== this.newFileName) {this.currentFile.fileName = this.newFileName}
+                        var index = this.files.indexOf(this.currentFile);
+                        Vue.set(this.files, index, { id: this.currentFile.id, fileName: this.currentFile.fileName, fileData: this.input + ' ' })
+                        this.currentFile = this.files[index];
+                        this.putFiles();
+
+                    }
+                    this.isExist = true;
+                    this.isDel = true;
+                    this.isOld = true;
+                    document.getElementById("textarea1").focus();
+                },
+
+                getFiles: function () {
+                    this.isHide = !this.isHide;
+                    this.isMenu = !this.isMenu;
+                    if (this.isHide) {return;}
+                    let container = document.getElementById("items");
+                    while (container.firstChild) {
+                        container.removeChild(container.firstChild);
+                        this.files = [];
+                    }
+                    var apiURL = "http://127.0.0.1:8000/";
+
+                    this.$http.get(apiURL + "api/files")
+                        .then(function (response) {
+                            var inputFiles = response.body;
+                            for (var i = 0; i < inputFiles.length; i++) {
+                                this.files.push({ id: inputFiles[i]._id, fileName: inputFiles[i].fileName, fileData: inputFiles[i].fileData })
+                            }
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                        });
+                },
+
+                postFiles: function () {
+                    var apiURL = "http://127.0.0.1:8000";
+                    this.$http.post(apiURL + "/api/files",
+                        {
+                            body:this.newFile
+                        },
+                        function (response) {
+                        })
+                        .then(function (response) {
+                            this.files.push({ id: response.body._id, fileName: this.newFileName, fileData: this.newFileData });
+                            var apiURL = "http://127.0.0.1:8000/";
+
+                            this.$http.get(apiURL + "api/files/" + response.body._id)
+                                .then(function (response) {
+                                    var inputFile = response.body;
+                                    var currFile = this.files.filter(function (elem) {
+                                        if (elem.id === inputFile._id) {
+                                            return elem;
+                                        }
+                                    })[0];
+                                    this.currentFile = currFile;
+                                    this.getFiles();
+                                    this.getFiles();
+                                })
+                                .catch(function (error) {
+                                    console.error(error);
+                                });
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                        });
+                },
+                putFiles: function () {
+                    var apiURL = "http://127.0.0.1:8000/";
+                    this.$http.put(apiURL + "api/files", {
+                        body: this.currentFile
+                    })
+                        .then(function (response) {
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                        });
+                },
+                deleteFile: function () {
+                    let apiURL = "http://127.0.0.1:8000/";
+                    this.$http.delete(apiURL + "api/files/" + this.currentFile.id, {
+                    })
+                        .then(response => {
+                            for (el in this.files) {
+                                if (this.files[el].id === this.currentFile.id) delete this.files[el];
+                            }
+                            this.files.sort();
+                            if (this.files[0] === null || this.files[0] === undefined) {
+                                this.getFiles();
+                                this.create();
+                                this.isHide = false;
+                            }
+                            else {
+                                this.open(this.files[0]);
+                                this.isDel = true;
+                            }
+                            
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                },
+                edit: function (){
+                    this.isEnterName = !this.isEnterName;
+                    
+                    document.getElementById("newName").focus();
+                }
+            }
+        })
+
+    </script>
+</body>
+
+</html>
