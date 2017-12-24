@@ -4,7 +4,8 @@
 
 1. Clone or download
 
-2. ```bash
+2. 
+```bash
 npm --save install
 ```
 
