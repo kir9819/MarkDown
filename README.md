@@ -2,7 +2,7 @@
 
 ## Installation
 
-Clone or download
+Install dependencies
 
 ```bash
 npm --save install
