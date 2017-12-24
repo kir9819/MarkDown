@@ -2,9 +2,8 @@
 
 ## Installation
 
-1. Clone or download
+Clone or download
 
-2. 
 ```bash
 npm --save install
 ```
